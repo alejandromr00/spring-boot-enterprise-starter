@@ -1,14 +1,20 @@
 package com.nexora.ai.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -17,29 +23,30 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 
 @Configuration
+@EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final JwtFilter jwtFilter;
     private static final String AUTH_ROUTER = "/api/auth/**";
     private static final String BUDGETS_ROUTER = "/api/budgets/**";
-    private static final String TASKS_ROUTER = "/api/tasks/**";
+    private static final String EXPENSES_ROUTER = "/api/expenses/**";
 
     @Bean
     public SecurityFilterChain securedFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, AUTH_ROUTER).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/test/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, BUDGETS_ROUTER).hasAnyRole("ADMIN", "USER")
-                        .requestMatchers(HttpMethod.POST, BUDGETS_ROUTER).hasAuthority("custom_role")
-                        .requestMatchers(HttpMethod.PUT, BUDGETS_ROUTER).hasAnyRole("ADMIN", "USER")
-                        .requestMatchers(HttpMethod.DELETE, BUDGETS_ROUTER).hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, EXPENSES_ROUTER).hasRole("ADMIN")
                         .requestMatchers("/api/**")
                         .authenticated()
                         .anyRequest()
                         .authenticated()
-                ).httpBasic(Customizer.withDefaults());
+                ).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -57,6 +64,11 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/api/**", configuration);
         source.registerCorsConfiguration("/public/**", configuration);
         return source;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) {
+        return configuration.getAuthenticationManager();
     }
 
     @Bean
