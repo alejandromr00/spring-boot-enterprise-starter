@@ -9,6 +9,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -48,11 +49,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // 3. Cargar el usuario del UserDetailsService
         String username = this.jwtUtil.getUsername(jwt);
-        User user = (User) this.userDetailsService.loadUserByUsername(username);
+        UserDetails user = this.userDetailsService.loadUserByUsername(username);
 
         // 4. Cargar al usuario en el contexto de seguridad.
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                user.getUsername(), user.getPassword(), user.getAuthorities()
+                user, null, user.getAuthorities()
         );
 
         authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

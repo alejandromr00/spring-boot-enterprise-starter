@@ -12,13 +12,13 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 public class JwtUtil {
-    private static String SECRET_KEY = "pl4tz1_p1zz4";
+    private static String SECRET_KEY = "pl4y_with_my_boops";
     private static Algorithm ALGORITHM = Algorithm.HMAC256(SECRET_KEY);
 
     public String create(String username) {
         return JWT.create()
                 .withSubject(username)
-                .withIssuer("platzi-pizza")
+                .withIssuer("pachiman")
                 .withIssuedAt(new Date())
                 .withExpiresAt(new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(15)))
                 .sign(ALGORITHM);

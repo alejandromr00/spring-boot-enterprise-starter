@@ -1,3 +1,4 @@
+
 package com.nexora.ai.service;
 
 import com.nexora.ai.entity.UserEntity;
@@ -7,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -28,22 +28,10 @@ public class UserSecurityService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String identifier) {
-        UserEntity user = userRepository
+        // UserEntity implementa UserDetails: se devuelve tal cual, sin convertir a User de Spring
+        return userRepository
                 .findByUsernameIgnoreCaseOrEmailIgnoreCase(identifier, identifier)
                 .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials"));
-
-
-        System.out.println();
-        System.out.println(authoritiesOf(user));
-        System.out.println();
-
-        return User.builder()
-                .username(user.getUsername())
-                .password(user.getPassword())
-                .authorities(authoritiesOf(user))
-                .accountLocked(Boolean.TRUE.equals(user.getLocked()))
-                .disabled(Boolean.TRUE.equals(user.getDisabled()))
-                .build();
     }
 
     private static Set<GrantedAuthority> authoritiesOf(UserEntity user) {
